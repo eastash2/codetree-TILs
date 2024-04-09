@@ -169,7 +169,7 @@ int main() {
     std::vector<coord> man_move;
     int t = 0;
     int num_arrived = 0;
-    debug(map, camp, convini);
+  //  debug(map, camp, convini);
     while(num_arrived < m) {
         //man moves
         const int num_man_started = man_move.size();
@@ -194,7 +194,7 @@ int main() {
 
 
         t++;
-        debug(map, camp, convini);
+  //      debug(map, camp, convini);
     }
     std::cout << t;
     return 0;
