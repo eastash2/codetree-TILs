@@ -5,6 +5,8 @@
 #include <queue>
 
 typedef std::pair<int, int> coord;
+const int max_int = std::numeric_limits<int>::max();
+const int dxdy[4][2] = {{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
 inline int abs(int n) {
     return n < 0 ? -n : n;
 }
@@ -13,41 +15,58 @@ inline int min(int a, int b) {
 }
 
 coord get_start_camp(const std::vector<std::vector<bool> >& map, const std::vector<coord>& camp, const coord convini) {
-    const int max_int = std::numeric_limits<int>::max();
-
-    const int row = convini.first;
-    const int col = convini.second;  
-
-    coord min_camp(max_int, max_int);
-    int min_distance = max_int;
-    for(coord c : camp) {
+    const int n = map.size();
+    const int c_size = camp.size();
+    std::vector<int> dist_per_camp(camp.size(), max_int);    
+    for(int i = 0; i < c_size; i++) {
+        coord c = camp[i];
         if(!map[c.first][c.second]) 
             continue;
 
-        int distance = abs(c.first - row) + abs(c.second - col);
-        if(distance > min_distance)
-            continue;
-        
-        if(distance < min_distance) {
-            min_distance = distance;
-            min_camp = c;
-            continue;            
+        std::vector<std::vector<bool> > visited(n, std::vector<bool>(n, false));
+        std::vector<std::vector<int> > distance(n, std::vector<int>(n, max_int));
+        distance[c.first][c.second] = 0;
+
+        std::queue<coord> q;
+        q.push(c);
+        while(!q.empty()) {
+            coord now = q.front(); q.pop();
+            if(visited[now.first][now.second])
+                continue;
+            visited[now.first][now.second] = true;
+            if(now == convini) {
+                break;
+            }
+            for(int j = 0; j < 4; j++) {
+                int nnx = now.first + dxdy[j][0];
+                int nny = now.second + dxdy[j][1];
+                if(nnx < 0 || nnx >= n || nny < 0 || nny >= n || !map[nnx][nny])
+                    continue;
+            
+                q.push(coord(nnx, nny));                
+                distance[nnx][nny] = min(distance[nnx][nny], distance[now.first][now.second] + 1);
+                 
+            }
         }
-        
-        if(c.first < min_camp.first || (c.first == min_camp.first && c.second < min_camp.second)) {
-            min_camp = c;
-        }
-        
+        dist_per_camp[i] = distance[convini.first][convini.second];
     }
-    return min_camp;
+    int min_dist = max_int;
+    int camp_ind = 0;
+    for(int i = 0; i < c_size; i++) {
+        if(min_dist > dist_per_camp[i]) {
+            camp_ind = i;
+            min_dist = dist_per_camp[i];
+        }
+    }
+    return camp[camp_ind];
 }
 
 //coordinate with depth
 coord move_one_man(const std::vector<std::vector<bool> >& map, const coord man, const coord convini) {
     const int n = map.size();   
 
-    std::vector<int> dist_per_direction(4, -1);
-    int dxdy[4][2] = {{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
+    std::vector<int> dist_per_direction(4, max_int);
+    
     for(int i = 0; i < 4; i++) {
         int nx = man.first + dxdy[i][0];
         int ny = man.second + dxdy[i][1];
@@ -55,7 +74,7 @@ coord move_one_man(const std::vector<std::vector<bool> >& map, const coord man, 
         if(nx < 0 || nx >= n || ny < 0 || ny >= n || !map[nx][ny])
             continue;
         std::vector<std::vector<bool> > visited(n, std::vector<bool>(n, false));
-        std::vector<std::vector<int> > distance(n, std::vector<int>(n, -1));
+        std::vector<std::vector<int> > distance(n, std::vector<int>(n, max_int));
         distance[man.first][man.second] = 0;
         visited[man.first][man.second] = true;
         distance[nx][ny] = 1;
@@ -77,20 +96,15 @@ coord move_one_man(const std::vector<std::vector<bool> >& map, const coord man, 
                     continue;
             
                 q.push(coord(nnx, nny));
-                if(distance[nnx][nny] == -1)
-                    distance[nnx][nny] = distance[now.first][now.second] + 1;
-                else
-                    distance[nnx][nny] = min(distance[nnx][nny], distance[now.first][now.second] + 1);
+                distance[nnx][nny] = min(distance[nnx][nny], distance[now.first][now.second] + 1);
                  
             }
         }
         dist_per_direction[i] = distance[convini.first][convini.second];
     }
-    int min_dist = std::numeric_limits<int>::max();
+    int min_dist = max_int;
     int direction = 0;
     for(int i = 0; i < 4; i++) {
-        if(dist_per_direction[i] == -1)
-            continue;
         if(min_dist >= dist_per_direction[i]) {
             direction = i;
             min_dist = dist_per_direction[i];
@@ -98,7 +112,35 @@ coord move_one_man(const std::vector<std::vector<bool> >& map, const coord man, 
     }
     return coord(man.first + dxdy[direction][0], man.second + dxdy[direction][1]);
 }
-
+void debug(std::vector<std::vector<bool> > map, std::vector<coord> camp, std::vector<coord> convini) {
+    std::cout << "////////////////\n";
+    int n = map.size();
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            bool drawn = false;
+            for(coord c : camp) {
+                if(c.first == i && c.second == j) {
+                    std::cout << (map[i][j] ? "B " : "b ");
+                    drawn = true;
+                    break;
+                }
+            }
+            if(!drawn) {
+                for(coord c : convini) {
+                    if(c.first == i && c.second == j) {
+                        std::cout << (map[i][j] ? "C " : "c ");
+                        drawn = true;
+                        break;
+                    }
+                }   
+            }
+            if(!drawn)
+                std::cout << (map[i][j] ? "o " : "x ");            
+        }
+        std::cout << "\n";
+    }
+    std::cout << "////////////////\n";
+}
 int main() {
     int n, m;
     std::cin >> n >> m;
@@ -127,11 +169,13 @@ int main() {
     std::vector<coord> man_move;
     int t = 0;
     int num_arrived = 0;
+    debug(map, camp, convini);
     while(num_arrived < m) {
         //man moves
         const int num_man_started = man_move.size();
         for(int j = 0; j < num_man_started; j++)
-            man_move[j] = move_one_man(map, man_move[j], convini[j]);
+            if(man_move[j] != convini[j])
+                man_move[j] = move_one_man(map, man_move[j], convini[j]);
 
         //check convini
         for(int j = 0; j < num_man_started; j++) {
@@ -150,6 +194,7 @@ int main() {
 
 
         t++;
+        debug(map, camp, convini);
     }
     std::cout << t;
     return 0;
