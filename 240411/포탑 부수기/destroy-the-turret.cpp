@@ -207,17 +207,18 @@ void debug() {
 int main() {
     init();
 
-  //  debug();
+ //   debug();
     for(int turn = 1; turn <= K; turn++) {
         if(num_alive == 1)
             break;
 
-        Pos attacker = get_attacker();
-        board[attacker.first][attacker.second] += bonus;
-        recent_attack[attacker.first][attacker.second] = turn;
+        Pos attacker = get_attacker();         
     //    std::cout << attacker.first << ", " << attacker.second << " attackes \n";
         Pos defender = get_defender();
-   //     std::cout << defender.first << ", " << defender.second << " defends \n";
+    //    std::cout << defender.first << ", " << defender.second << " defends \n";
+        
+        recent_attack[attacker.first][attacker.second] = turn;
+        board[attacker.first][attacker.second] += bonus;
         if(!try_laser_attack(attacker, defender))
             bomb_attack(attacker, defender);      
 
@@ -232,7 +233,7 @@ int main() {
 
             }
         }
-      //  debug();
+  //      debug();
     }
 
     int max_val = 0;
