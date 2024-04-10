@@ -176,7 +176,8 @@ void bomb_attack(Pos attacker, Pos defender) {
         int ny = (defender.second + dxdy[i][0] + M) % M;
         if(board[nx][ny] == 0) 
             continue;
-        
+        if(attacker == Pos(nx, ny))
+            continue;
         board[nx][ny] -= atk / 2;
         modified[nx][ny] = true;
         if(board[nx][ny] <= 0) {
